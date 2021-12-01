@@ -33,7 +33,7 @@ def create_db_pp(conn):
     """)
 
 
-def download_pp(year, part, conn):
+def download_pp(conn, year, part):
     name = 'pp-' + str(year) + '-part' + str(part) + '.csv'
     urllib.request.urlretrieve('http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/' + name,
                                name)
@@ -48,8 +48,8 @@ def download_pp(year, part, conn):
 
 def data_pp(conn):
     for year in range(1995, 2022):
-        download_pp(year, 1, conn)
-        download_pp(year, 2, conn)
+        download_pp(conn, year, 1)
+        download_pp(conn, year, 2)
 
 
 def create_index_pp(conn):
@@ -106,7 +106,6 @@ def create_index_postcode(conn):
 def create_db_prices_coord(conn):
     cur = conn.cursor()
     cur.execute("""
-                DROP TABLE IF EXISTS `prices_coordinates_data`;
                 CREATE TABLE IF NOT EXISTS `prices_coordinates_data` (
                   `price` int(10) unsigned NOT NULL,
                   `date_of_transfer` date NOT NULL,
@@ -156,7 +155,7 @@ def join_pp_postcode_other(low_long, high_long, low_lat, high_lat, year, conn):
     return data
 
 
-def join_into_db(data, conn):
+def joined_to_db(data, conn):
     data.to_csv('joined_pp_cord.csv', index=False, header=False)
     cur = conn.cursor()
     cur.execute(
@@ -186,3 +185,4 @@ def add_pois(data, t, box_size, latitude, longitude):
         pois.reset_index(inplace=True)
         pois.set_index('osmid', inplace=True)
         gp_data[col_name] = sjoin(gp_data, pois, how='left').groupby(['index']).count()['price']
+    return gp_data

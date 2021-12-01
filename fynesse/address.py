@@ -4,20 +4,21 @@ import numpy as np
 from fynesse.assess import *
 from fynesse.access import *
 
-def predict_price(latitude, longitude, year, property_type):
-    results_basis = train_data(latitude, longitude, year, property_type, 0.15)
+
+def predict_price(conn, latitude, longitude, year, property_type):
+    results_basis = train_data(latitude, longitude, year, property_type, 0.15, conn)
     # gp_point = add_pois_point(latitude, longitude)
     # design_pred = np.array([gp_point])
     # return results_basis.predict(design_pred)
     return 1
 
 
-def train_data(latitude, longitude, year, property_type, box_size):
+def train_data(latitude, longitude, year, property_type, box_size, conn):
     if property_type == 'O':
-        joined_data = join_pp_postcode_other(longitude - box_size, longitude + box_size, latitude - box_size,
+        joined_data = join_pp_postcode_other(conn, longitude - box_size, longitude + box_size, latitude - box_size,
                                              latitude + box_size, year)
     else:
-        joined_data = join_pp_postcode(longitude - box_size, longitude + box_size, latitude - box_size,
+        joined_data = join_pp_postcode(conn, longitude - box_size, longitude + box_size, latitude - box_size,
                                        latitude + box_size, year, property_type)
     if len(joined_data) == 0:
         if box_size == 0.15:
