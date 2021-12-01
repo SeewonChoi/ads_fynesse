@@ -1,30 +1,48 @@
 from .config import *
 
-import .access
-
-"""These are the types of import we might expect in this file
-import pandas
-import bokeh
-import matplotlib.pyplot as plt
-import sklearn.decomposition as decomposition
-import sklearn.feature_extraction"""
-
-"""Place commands in this file to assess the data you have downloaded. How are missing values encoded, how are outliers encoded? What do columns represent, makes rure they are correctly labeled. How is the data indexed. Crete visualisation routines to assess the data (e.g. in bokeh). Ensure that date formats are correct and correctly timezoned."""
+import numpy as np
+import pandas as pd
 
 
-def data():
-    """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
-    df = access.data()
-    raise NotImplementedError
+def select_top(conn, table, n):
+    cur = conn.cursor()
+    cur.execute(f'SELECT * FROM {table} LIMIT {n}')
+    rows = cur.fetchall()
+    return rows
 
-def query(data):
-    """Request user input for some aspect of the data."""
-    raise NotImplementedError
 
-def view(data):
-    """Provide a view of the data that allows the user to verify some aspect of its quality."""
-    raise NotImplementedError
+def head(conn, table, n=5):
+    rows = select_top(conn, table, n)
+    for r in rows:
+        print(r)
 
-def labelled(data):
-    """Provide a labelled set of data ready for supervised learning."""
-    raise NotImplementedError
+
+def tidy_joined_df(data):
+    data.rename({0: "price", 1: "date", 2: "type", 3: "postcode", 4: "longitude", 5: "latitude"}, inplace=True,
+                axis='columns')
+    data['longitude'] = data['longitude'].astype(float)
+    data['latitude'] = data['latitude'].astype(float)
+    data['log_price'] = np.log(data['price'])
+    return data
+
+
+def query_by_year(conn, year):
+    cur = conn.cursor()
+    cur.execute(f"""SELECT pp.price as price, pp.`date_of_transfer` as date, pp.`property_type` as type, pp.postcode as postcode, pc.longitude as longitude, pc.lattitude as latitude
+                    FROM 
+                      (SELECT lattitude, longitude, postcode FROM `postcode_data`) pc
+                    INNER JOIN
+                      (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE AND YEAR(`date_of_transfer`) = {year}) pp
+                    ON pc.postcode = pp.postcode
+                    """)
+    rows = cur.fetchall()
+    data = pd.DataFrame.from_records(rows)
+    return tidy_joined_df(data)
+
+
+def query_by_postcode(conn, postcode):
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM `pp_data` WHERE (postcode='{postcode}')")
+    rows = cur.fetchall()
+    data = pd.DataFrame.from_records(rows)
+    return data
