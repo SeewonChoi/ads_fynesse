@@ -32,7 +32,7 @@ def query_by_year(conn, year):
                     FROM 
                       (SELECT lattitude, longitude, postcode FROM `postcode_data`) pc
                     INNER JOIN
-                      (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE AND YEAR(`date_of_transfer`) = {year}) pp
+                      (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = 2018) pp
                     ON pc.postcode = pp.postcode
                     """)
     rows = cur.fetchall()
@@ -42,7 +42,7 @@ def query_by_year(conn, year):
 
 def query_by_postcode(conn, postcode):
     cur = conn.cursor()
-    cur.execute(f"SELECT * FROM `pp_data` WHERE (postcode='{postcode}')")
+    cur.execute(f"SELECT * FROM `pp_data` WHERE postcode='{postcode}'")
     rows = cur.fetchall()
     data = pd.DataFrame.from_records(rows)
     return data
