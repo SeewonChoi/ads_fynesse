@@ -8,7 +8,7 @@ import geopandas as gpd
 from geopandas.tools import sjoin
 
 
-def create_db_pp(conn):
+def create_table_pp(conn):
     cur = conn.cursor()
     cur.execute("""
                 CREATE TABLE IF NOT EXISTS `pp_data` (
@@ -60,7 +60,7 @@ def create_index_pp(conn):
     """)
 
 
-def create_db_postcode(conn):
+def create_table_postcode(conn):
     cur = conn.cursor()
     cur.execute("""
                 CREATE TABLE IF NOT EXISTS `pp_data` (
@@ -103,7 +103,7 @@ def create_index_postcode(conn):
     cur.execute("CREATE INDEX `po.postcode` USING HASH ON `postcode_data` (postcode);")
 
 
-def create_db_prices_coord(conn):
+def create_table_prices_coord(conn):
     cur = conn.cursor()
     cur.execute("""
                 CREATE TABLE IF NOT EXISTS `prices_coordinates_data` (
@@ -125,37 +125,26 @@ def create_db_prices_coord(conn):
     """)
 
 
-def join_pp_postcode(conn, low_long, high_long, low_lat, high_lat, year, property_type):
+def join_pp_postcode(conn, north, south, east, west, start_date, end_date, property_type='all'):
+    if property_type == 'all':
+        condition = ""
+    else:
+        condition = f"`property_type` = '{property_type}' AND "
     cur = conn.cursor()
     cur.execute(f"""
-              SELECT pp.price as price, pp.`date_of_transfer` as date, pp.`property_type` as type, pp.postcode as postcode, pc.longitude as longitude, pc.lattitude as latitude
+              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pp.`new_build_flag`, pp.`tenure_type`, pp.locality, pp.`town_city`, pp.district, pp.county, pp.country, pc.longitude, pc.lattitude
               FROM 
-                (SELECT lattitude, longitude, postcode FROM `postcode_data` WHERE longitude>{low_long} AND longitude<{high_long} AND lattitude>{low_lat} AND lattitude<{high_lat}) pc
+                (SELECT lattitude, longitude, postcode FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
               INNER JOIN
-                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE `property_type` = '{property_type}' AND YEAR(`date_of_transfer`) = {year}) pp
+                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE {condition} DATE(`date_of_transfer`) BETWEEN '{start_date}' AND '{end_date}') pp 
               ON pc.postcode = pp.postcode
               """)
     rows = cur.fetchall()
-    data = pd.DataFrame.from_records(rows)
-    return data
+    return rows
 
 
-def join_pp_postcode_other(low_long, high_long, low_lat, high_lat, year, conn):
-    cur = conn.cursor()
-    cur.execute(f"""
-              SELECT pp.price as price, pp.`date_of_transfer` as date, pp.`property_type` as type, pp.postcode as postcode, pc.longitude as longitude, pc.lattitude as latitude
-              FROM 
-                (SELECT lattitude, longitude, postcode FROM `postcode_data` WHERE longitude>{low_long} AND longitude<{high_long} AND lattitude>{low_lat} AND lattitude<{high_lat}) pc
-              INNER JOIN
-                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = {year}) pp
-              ON pc.postcode = pp.postcode
-              """)
-    rows = cur.fetchall()
-    data = pd.DataFrame.from_records(rows)
-    return data
-
-
-def joined_to_db(data, conn):
+def data_joined(record, conn):
+    data = pd.DataFrame.from_records(record)
     data.to_csv('joined_pp_cord.csv', index=False, header=False)
     cur = conn.cursor()
     cur.execute(
@@ -164,25 +153,24 @@ def joined_to_db(data, conn):
     cur.close()
 
 
-def to_gdf(data):
+def to_gdf(data, buffer_size):
     geometry = gpd.points_from_xy(data.longitude, data.latitude)
     gp_data = gpd.GeoDataFrame(data, geometry=geometry)
     gp_data.crs = "EPSG:4326"
-    gp_data['geometry'] = gp_data['geometry'].buffer(0.005)
+    gp_data['geometry'] = gp_data['geometry'].buffer(buffer_size)
     gp_data.reset_index(inplace=True)
     return gp_data
 
 
-def add_pois(data, t, box_size, latitude, longitude):
-    gp_data = to_gdf(data)
-    for tag in t:
-        tags = {tag: True}
-        col_name = "count_" + tag
-        pois = ox.geometries_from_bbox(latitude + box_size, latitude - box_size, longitude + box_size,
-                                       longitude - box_size, tags)
+def add_pois(data, tag_list, name_list, buffer_size, north, south, east, west):
+    gp_data = to_gdf(data, buffer_size)
+    for n in range(len(tag_list)):
+        tags = tag_list[n]
+        col_name = name_list[n]
+        pois = ox.geometries_from_bbox(north, south, east, west, tags)
         if len(pois) == 0:
             continue
         pois.reset_index(inplace=True)
         pois.set_index('osmid', inplace=True)
-        gp_data[col_name] = sjoin(gp_data, pois, how='left').groupby(['index']).count()['price']
+        gp_data[col_name] = sjoin(gp_data, pois, how='left').groupby(['index']).size()
     return gp_data

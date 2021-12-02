@@ -2,6 +2,8 @@ from .config import *
 
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 
 def select_top(conn, table, n):
@@ -17,9 +19,11 @@ def head(conn, table, n=5):
         print(r)
 
 
-def tidy_joined_df(data):
-    data.rename({0: "price", 1: "date", 2: "type", 3: "postcode", 4: "longitude", 5: "latitude"}, inplace=True,
+def tidy_joined_record(record):
+    data = pd.DataFrame.from_records(record)
+    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 11: "latitude", 12: "longitude"}, inplace=True,
                 axis='columns')
+    data = data[["price", "date", "postcode", "type", "latitude", "longitude"]]
     data['longitude'] = data['longitude'].astype(float)
     data['latitude'] = data['latitude'].astype(float)
     data['log_price'] = np.log(data['price'])
@@ -36,13 +40,29 @@ def query_by_year(conn, year):
                     ON pc.postcode = pp.postcode
                     """)
     rows = cur.fetchall()
-    data = pd.DataFrame.from_records(rows)
-    return tidy_joined_df(data)
+    data = tidy_joined_record(rows)
+    return data
 
 
 def query_by_postcode(conn, postcode):
     cur = conn.cursor()
-    cur.execute(f"SELECT * FROM `pp_data` WHERE postcode='{postcode}'")
+    cur.execute(f"""SELECT * 
+                    FROM `pp_data` 
+                    WHERE postcode='{postcode}'
+                    """)
     rows = cur.fetchall()
     data = pd.DataFrame.from_records(rows)
+    data = data.rename({0: 'tid', 1: 'price', 2: 'date', 3: 'postcode', 4: 'type'}, axis='columns')
+    data = data[["tid", "price", "date", "postcode", "type"]]
+    data['log_price'] = np.log(data['price'])
     return data
+
+
+def pca_data(data, n, filter=False):
+    if filter:
+        data = data[data['price'] < data['price'].quantile(0.99)]
+    x = StandardScaler().fit_transform(data)
+    pca = PCA(n)
+    x_pca = pca.fit_transform(x)
+    df = pd.DataFrame(data=x_pca)
+    return df
