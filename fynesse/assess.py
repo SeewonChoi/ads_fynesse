@@ -16,7 +16,7 @@ def head(conn, table, n=5):
 
 def joined_record_to_df(record):
     data = pd.DataFrame.from_records(record)
-    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 11: "latitude", 12: "longitude"}, inplace=True,
+    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 12: "latitude", 11: "longitude"}, inplace=True,
                 axis='columns')
     data = data[["price", "date", "postcode", "type", "latitude", "longitude"]]
     data['longitude'] = data['longitude'].astype(float)

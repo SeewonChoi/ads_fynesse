@@ -49,7 +49,7 @@ def predict_price(conn, latitude, longitude, year, property_type):
     data = data.fillna(0)
     gp_data = data[:-1]
     results_basis = train_model(gp_data)
-    gp_point = gp_data.iloc[-1]
+    gp_point = data.iloc[-1]
     design_pred = np.array([[1, gp_point['ent'], gp_point['shop_amenity'], gp_point['healthcare'], gp_point['historic'],
                             gp_point['public_transport'], gp_point['tourism']]])
     pred = results_basis.predict(design_pred)
