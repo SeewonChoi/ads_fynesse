@@ -58,8 +58,8 @@ def query_by_postcode(conn, postcode):
     return data
 
 
-def pca_data(data, n, filter=False):
-    if filter:
+def pca_data(data, n, filter_price=False):
+    if filter_price:
         data = data[data['price'] < data['price'].quantile(0.99)]
     x = StandardScaler().fit_transform(data)
     pca = PCA(n)
