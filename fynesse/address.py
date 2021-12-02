@@ -1,3 +1,4 @@
+import numpy as np
 import statsmodels.api as sm
 from statsmodels.api import add_constant
 
@@ -22,13 +23,13 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
 
 def train_model(gp_data):
     data = gp_data[gp_data["price"] < gp_data["price"].quantile(0.99)]
-    design = np.concatenate((data['ent'].values.reshape(-1, 1),
+    design = np.concatenate((np.ones(len(data)).reshape(-1,1),
+                             data['ent'].values.reshape(-1, 1),
                              data['shop_amenity'].values.reshape(-1, 1),
                              data['healthcare'].values.reshape(-1, 1),
                              data['historic'].values.reshape(-1, 1),
                              data['public_transport'].values.reshape(-1, 1),
                              data['tourism'].values.reshape(-1, 1)), axis=1)
-    design = add_constant(design)
     m_linear_basis = sm.OLS(data['log_price'], design)
     results_basis = m_linear_basis.fit()
     return results_basis
