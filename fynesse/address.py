@@ -24,13 +24,13 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
 
 def train_model(gp_data):
     data = gp_data[gp_data["price"] < gp_data["price"].quantile(0.99)]
-    design = np.concatenate((data['ent'].values.reshape(-1, 1),
+    design = np.concatenate((np.ones(len(data)).reshape(-1,1),
+                             data['ent'].values.reshape(-1, 1),
                              data['shop_amenity'].values.reshape(-1, 1),
                              data['healthcare'].values.reshape(-1, 1),
                              data['historic'].values.reshape(-1, 1),
                              data['public_transport'].values.reshape(-1, 1),
                              data['tourism'].values.reshape(-1, 1)), axis=1)
-    design = add_constant(design)
     m_linear_basis = sm.OLS(data['log_price'], design)
     results_basis = m_linear_basis.fit()
     return results_basis
@@ -50,8 +50,7 @@ def predict_price(conn, latitude, longitude, year, property_type):
     gp_data = data[:-1]
     results_basis = train_model(gp_data)
     gp_point = gp_data.iloc[-1]
-    design_pred = np.array([gp_point['ent'], gp_point['shop_amenity'], gp_point['healthcare'], gp_point['historic'],
-                            gp_point['public_transport'], gp_point['tourism']])
-    design_pred = add_constant(design_pred)
+    design_pred = np.array([[1, gp_point['ent'], gp_point['shop_amenity'], gp_point['healthcare'], gp_point['historic'],
+                            gp_point['public_transport'], gp_point['tourism']]])
     pred = results_basis.predict(design_pred)
     return np.exp(pred)
