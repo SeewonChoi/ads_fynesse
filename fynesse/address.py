@@ -12,7 +12,7 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
     else:
         joined_data = join_pp_postcode_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
                                             longitude - box_size, year, property_type)
-    data = joined_record_to_df(joined_data)
+    data = tidy_dataframe(joined_data)
     return data, box_size
 
 

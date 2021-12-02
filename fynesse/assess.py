@@ -61,3 +61,12 @@ def pca_df(data, n, filter_price=False):
     x_pca = pca.fit_transform(x)
     df = pd.DataFrame(data=x_pca)
     return df
+
+
+def tidy_dataframe(joined_df):
+    joined_df.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 4: "longitude", 5: "latitude"}, inplace=True,
+                     axis='columns')
+    joined_df['longitude'] = joined_df['longitude'].astype(float)
+    joined_df['latitude'] = joined_df['latitude'].astype(float)
+    joined_df['log_price'] = np.log(joined_df['price'])
+    return joined_df
