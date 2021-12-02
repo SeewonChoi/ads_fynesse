@@ -13,9 +13,9 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
                                        longitude - box_size, start_date, end_date)
     else:
         joined_data = join_pp_postcode(conn, latitude + box_size, latitude - box_size, longitude + box_size,
-                                       longitude - box_size, start_date, end_date, property_type)
+                                       longitude - box_size, start_date, end_date, property_type=property_type)
     if len(joined_data) < 1000 and box_size < 0.2:
-        joined_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.2)
+        joined_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, box_size+0.05)
     if len(joined_data) == 0:
         raise ValueError("Unable to make a prediction")
     data = joined_record_to_df(joined_data)
@@ -38,7 +38,7 @@ def train_model(gp_data):
 
 def predict_price(conn, latitude, longitude, year, property_type):
     pred_point = {'latitude': latitude, 'longitude': longitude}
-    training_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.15)
+    training_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.1)
     data = training_data.append(pred_point, ignore_index=True)
     tag = [{'leisure': True}, {'sport': True}, {'healthcare': True}, {'historic': True}, {'public_transport': True},
            {'tourism': True}, {'shop': True, 'amenity': True}]
