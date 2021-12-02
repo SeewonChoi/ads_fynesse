@@ -135,7 +135,7 @@ def join_pp_postcode(conn, north, south, east, west, start_date, end_date, prope
     cur.execute(f"""
               SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pp.`new_build_flag`, pp.`tenure_type`, pp.locality, pp.`town_city`, pp.district, pp.county, pc.country, pc.longitude, pc.lattitude
               FROM 
-                (SELECT lattitude, longitude, postcode FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
+                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
               INNER JOIN
                 (SELECT * FROM `pp_data` WHERE {condition} DATE(`date_of_transfer`) BETWEEN '{start_date}' AND '{end_date}') pp 
               ON pc.postcode = pp.postcode
