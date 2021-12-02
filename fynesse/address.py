@@ -10,7 +10,7 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
         joined_data = join_pp_postcode_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
                                        longitude - box_size, year)
     else:
-        joined_data = join_pp_postcode(conn, latitude + box_size, latitude - box_size, longitude + box_size,
+        joined_data = join_pp_postcode_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
                                        longitude - box_size, year, property_type=property_type)
     if len(joined_data) < 1000 and box_size < 0.2:
         joined_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, box_size+0.05)
