@@ -6,14 +6,12 @@ from fynesse.access import *
 
 
 def choose_training_data(conn, latitude, longitude, year, property_type, box_size):
-    start_date = str(year) + "-01-01"
-    end_date = str(year+1) + "-01-01"
     if property_type == 'O':
-        joined_data = join_pp_postcode(conn, latitude + box_size, latitude - box_size, longitude + box_size,
-                                       longitude - box_size, start_date, end_date)
+        joined_data = join_pp_postcode_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
+                                       longitude - box_size, year)
     else:
         joined_data = join_pp_postcode(conn, latitude + box_size, latitude - box_size, longitude + box_size,
-                                       longitude - box_size, start_date, end_date, property_type=property_type)
+                                       longitude - box_size, year, property_type=property_type)
     if len(joined_data) < 1000 and box_size < 0.2:
         joined_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, box_size+0.05)
     if len(joined_data) == 0:

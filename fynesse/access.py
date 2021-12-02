@@ -144,6 +144,24 @@ def join_pp_postcode(conn, north, south, east, west, start_date, end_date, prope
     return rows
 
 
+def join_pp_postcode_year(conn, north, south, east, west, year, property_type='all'):
+    if property_type == 'all':
+        condition = ""
+    else:
+        condition = f"`property_type` = '{property_type}' AND "
+    cur = conn.cursor()
+    cur.execute(f"""
+              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pp.`new_build_flag`, pp.`tenure_type`, pp.locality, pp.`town_city`, pp.district, pp.county, pc.country, pc.longitude, pc.lattitude
+              FROM 
+                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
+              INNER JOIN
+                (SELECT * FROM `pp_data` WHERE {condition} YEAR(`date_of_transfer`) == {year} ) pp 
+              ON pc.postcode = pp.postcode
+              """)
+    rows = cur.fetchall()
+    return rows
+
+
 def data_joined(record, conn):
     data = pd.DataFrame.from_records(record)
     data.to_csv('joined_pp_cord.csv', index=False, header=False)
