@@ -6,17 +6,19 @@ from fynesse.access import *
 
 
 def choose_training_data(conn, latitude, longitude, year, property_type, box_size):
+    start_date = str(year) + "-01-01"
+    end_date = str(year+1) + "-01-01"
     if property_type == 'O':
-        joined_data = join_pp_postcode(conn, longitude-box_size, longitude+box_size, latitude-box_size,
-                                             latitude+box_size, year)
+        joined_data = join_pp_postcode(conn, longitude - box_size, longitude + box_size, latitude - box_size,
+                                       latitude + box_size, start_date, end_date)
     else:
         joined_data = join_pp_postcode(conn, longitude - box_size, longitude + box_size, latitude - box_size,
                                        latitude + box_size, year, property_type)
     if len(joined_data) < 1000 and box_size == 0.15:
-        joined_data, a, b = choose_training_data(latitude, longitude, year, property_type, 0.2)
+        joined_data, a, b = choose_training_data(conn, latitude, longitude, year, property_type, 0.2)
     if len(joined_data) == 0:
         raise "Cannot make a prediction."
-    joined_data = tidy_joined_record(joined_data)
+    joined_data = joined_record_to_df(joined_data)
     return joined_data, len(joined_data), box_size
 
 
@@ -36,18 +38,20 @@ def train_model(gp_data):
 
 def predict_price(conn, latitude, longitude, year, property_type):
     pred_point = {'latitude': latitude, 'longitude': longitude}
-    training_data = choose_training_data(conn, latitude, longitude, year, property_type, 0.15)
-    data, data_size, box_size = training_data.append(pred_point, ignore_index=True)
+    training_data, data_size, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.15)
+    data = training_data.append(pred_point, ignore_index=True)
     tag = [{'leisure': True}, {'sport': True}, {'healthcare': True}, {'historic': True}, {'public_transport': True},
            {'tourism': True}, {'shop': True, 'amenity': True}]
     name = ['leisure', 'sport' 'healthcare', 'historic', 'public_transport', 'tourism', 'shop_amenity']
-    data = add_pois(data, tag, name, 0.05, latitude+box_size, latitude-box_size, longitude+box_size, longitude-box_size)
+    data = add_pois(data, tag, name, 0.05, latitude + box_size, latitude - box_size, longitude + box_size,
+                    longitude - box_size)
     data['ent'] = data['leisure'] + data['sport']
     data = data.fillna(0)
     gp_data = data[:-1]
     results_basis = train_model(gp_data)
     gp_point = gp_data.iloc[-1]
-    design_pred = np.array([gp_point['ent'], gp_point['shop_amenity'], gp_point['healthcare'], gp_point['historic'], gp_point['public_transport'], gp_point['tourism']])
+    design_pred = np.array([gp_point['ent'], gp_point['shop_amenity'], gp_point['healthcare'], gp_point['historic'],
+                            gp_point['public_transport'], gp_point['tourism']])
     design_pred = add_constant(design_pred)
     pred = results_basis.predict(design_pred)
     return np.exp(pred)
