@@ -155,7 +155,7 @@ def join_pp_postcode_year(conn, north, south, east, west, year, property_type='a
               FROM 
                 (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
               INNER JOIN
-                (SELECT * FROM `pp_data` WHERE {condition} YEAR(`date_of_transfer`) == {year} ) pp 
+                (SELECT * FROM `pp_data` WHERE {condition} YEAR(`date_of_transfer`) = {year}) pp 
               ON pc.postcode = pp.postcode
               """)
     rows = cur.fetchall()
