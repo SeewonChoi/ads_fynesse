@@ -153,20 +153,20 @@ def data_joined(record, conn):
     cur.close()
 
 
-def to_gdf(data, buffer_size):
+def to_gdf(data, distance):
     geometry = gpd.points_from_xy(data.longitude, data.latitude)
     gp_data = gpd.GeoDataFrame(data, geometry=geometry)
     gp_data.crs = "EPSG:4326"
-    gp_data['geometry'] = gp_data['geometry'].buffer(buffer_size)
+    gp_data['geometry'] = gp_data['geometry'].buffer(distance)
     gp_data.reset_index(inplace=True)
     return gp_data
 
 
-def add_pois(data, tag_list, name_list, buffer_size, north, south, east, west):
-    gp_data = to_gdf(data, buffer_size)
+def add_pois(data, tag_list, col_name_list, distance, north, south, east, west):
+    gp_data = to_gdf(data, distance)
     for n in range(len(tag_list)):
         tags = tag_list[n]
-        col_name = name_list[n]
+        col_name = col_name_list[n]
         pois = ox.geometries_from_bbox(north, south, east, west, tags)
         if len(pois) == 0:
             continue
