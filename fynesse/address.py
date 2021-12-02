@@ -42,7 +42,7 @@ def predict_price(conn, latitude, longitude, year, property_type):
     data = training_data.append(pred_point, ignore_index=True)
     tag = [{'leisure': True}, {'sport': True}, {'healthcare': True}, {'historic': True}, {'public_transport': True},
            {'tourism': True}, {'shop': True, 'amenity': True}]
-    name = ['leisure', 'sport' 'healthcare', 'historic', 'public_transport', 'tourism', 'shop_amenity']
+    name = ['leisure', 'sport', 'healthcare', 'historic', 'public_transport', 'tourism', 'shop_amenity']
     data = add_pois(data, tag, name, 0.05, latitude + box_size, latitude - box_size, longitude + box_size,
                     longitude - box_size)
     data['ent'] = data['leisure'] + data['sport']
