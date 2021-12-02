@@ -17,7 +17,7 @@ def choose_training_data(conn, latitude, longitude, year, property_type, box_siz
     if len(joined_data) < 1000 and box_size == 0.15:
         joined_data, a, b = choose_training_data(conn, latitude, longitude, year, property_type, 0.2)
     if len(joined_data) == 0:
-        raise "Cannot make a prediction."
+        raise ValueError("Unable to make a prediction for the given input.")
     joined_data = joined_record_to_df(joined_data)
     return joined_data, len(joined_data), box_size
 
