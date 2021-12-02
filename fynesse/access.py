@@ -8,6 +8,11 @@ import geopandas as gpd
 from geopandas.tools import sjoin
 
 
+def drop_table(conn, table_name):
+    cur = conn.cursor()
+    cur.execute(f"DROP TABLE IF EXISTS `{table_name}`;")
+
+
 def create_table_pp(conn):
     cur = conn.cursor()
     cur.execute("""
@@ -30,7 +35,7 @@ def create_table_pp(conn):
                   `record_status` varchar(2) COLLATE utf8_bin NOT NULL,
                   `db_id` bigint(20) unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT
                 ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
-    """)
+                """)
 
 
 def download_pp(conn, year, part):
@@ -57,7 +62,7 @@ def create_index_pp(conn):
     cur.execute("""
                 CREATE INDEX `pp.postcode` USING HASH ON `pp_data` (postcode);
                 CREATE INDEX `pp.date` USING HASH ON `pp_data` (date_of_transfer);
-    """)
+                """)
 
 
 def create_table_postcode(conn):
@@ -83,7 +88,7 @@ def create_table_postcode(conn):
                   `incode` varchar(3)  COLLATE utf8_bin NOT NULL,
                   `db_id` bigint(20) unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT
                 ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
-    """)
+                """)
 
 
 def data_postcode(conn):
@@ -123,7 +128,7 @@ def create_table_prices_coord(conn):
                   `longitude` decimal(10,8) NOT NULL,
                   `db_id` bigint(20) unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT
                 ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1 ;
-    """)
+                """)
 
 
 def join_pp_postcode(conn, north, south, east, west, start_date, end_date):
@@ -134,34 +139,6 @@ def join_pp_postcode(conn, north, south, east, west, start_date, end_date):
                 (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
               INNER JOIN
                 (SELECT * FROM `pp_data` WHERE DATE(`date_of_transfer`) BETWEEN '{start_date}' AND '{end_date}') pp 
-              ON pc.postcode = pp.postcode
-              """)
-    rows = cur.fetchall()
-    return rows
-
-
-def join_pp_postcode_year(conn, north, south, east, west, year, property_type):
-    cur = conn.cursor()
-    cur.execute(f"""
-              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude
-              FROM 
-                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
-              INNER JOIN
-                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE `property_type`='{property_type}' AND YEAR(`date_of_transfer`) = {year}) pp 
-              ON pc.postcode = pp.postcode
-              """)
-    rows = cur.fetchall()
-    return rows
-
-
-def join_pp_postcode_year_other(conn, north, south, east, west, year):
-    cur = conn.cursor()
-    cur.execute(f"""
-              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude
-              FROM 
-                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
-              INNER JOIN
-                (SELECT price, `date_of_transer`, postcode, `propety_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = {year}) pp 
               ON pc.postcode = pp.postcode
               """)
     rows = cur.fetchall()

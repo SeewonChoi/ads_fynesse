@@ -14,11 +14,21 @@ def head(conn, table, n=5):
         print(r)
 
 
-def joined_record_to_df(record):
+def record_to_df(record):
     data = pd.DataFrame.from_records(record)
     data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 12: "latitude", 11: "longitude"}, inplace=True,
                 axis='columns')
     data = data[["price", "date", "postcode", "type", "latitude", "longitude"]]
+    data['longitude'] = data['longitude'].astype(float)
+    data['latitude'] = data['latitude'].astype(float)
+    data['log_price'] = np.log(data['price'])
+    return data
+
+
+def short_record_to_df(record):
+    data = pd.DataFrame.from_records(record)
+    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 5: "latitude", 4: "longitude"}, inplace=True,
+                axis='columns')
     data['longitude'] = data['longitude'].astype(float)
     data['latitude'] = data['latitude'].astype(float)
     data['log_price'] = np.log(data['price'])
@@ -53,6 +63,34 @@ def query_by_postcode(conn, postcode):
     return data
 
 
+def join_by_year(conn, north, south, east, west, year):
+    cur = conn.cursor()
+    cur.execute(f"""
+              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude
+              FROM 
+                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
+              INNER JOIN
+                (SELECT price, `date_of_tranfser`, postcode, `property_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = {year}) pp 
+              ON pc.postcode = pp.postcode
+              """)
+    rows = cur.fetchall()
+    return rows
+
+
+def join_by_year_type(conn, north, south, east, west, year, property_type):
+    cur = conn.cursor()
+    cur.execute(f"""
+              SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude
+              FROM 
+                (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
+              INNER JOIN
+                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE `property_type`='{property_type}' AND YEAR(`date_of_transfer`) = {year}) pp 
+              ON pc.postcode = pp.postcode
+              """)
+    rows = cur.fetchall()
+    return rows
+
+
 def pca_df(data, n, filter_price=False):
     if filter_price:
         data = data[data['price'] < data['price'].quantile(0.99)]
@@ -61,13 +99,3 @@ def pca_df(data, n, filter_price=False):
     x_pca = pca.fit_transform(x)
     df = pd.DataFrame(data=x_pca)
     return df
-
-
-def tidy_dataframe(record):
-    data = pd.DataFrame.from_records(record)
-    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 4: "longitude", 5: "latitude"}, inplace=True,
-                     axis='columns')
-    data['longitude'] = data['longitude'].astype(float)
-    data['latitude'] = data['latitude'].astype(float)
-    data['log_price'] = np.log(data['price'])
-    return data
