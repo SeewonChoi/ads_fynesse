@@ -67,4 +67,8 @@ def prediction_data(conn, latitude, longitude, year, property_type):
     data['ent'] = data['leisure'] + data['sport']
     data = data.fillna(0)
     results_basis = train_model(data)
-    return data, results_basis
+    design_pred = np.column_stack((data['ent'], data['shop_amenity'],data['healthcare'],data['historic'],data['public_transport'],data['tourism']))
+    design_pred = add_constant(design_pred)
+    data['intercept'] = np.ones(len(data))
+    data['pred'] = results_basis.predict(design_pred)
+    return data
