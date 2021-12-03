@@ -55,7 +55,3 @@ def predict_price(conn, latitude, longitude, year, property_type):
                    gp_point['public_transport'], gp_point['tourism']]
     pred = results_basis.predict(design_pred)
     return np.exp(pred)[0]
-
-
-
-def
