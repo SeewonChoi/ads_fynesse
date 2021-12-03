@@ -45,7 +45,7 @@ def query_by_date(conn, start_date, end_date):
                     ON pc.postcode = pp.postcode
                     """)
     rows = cur.fetchall()
-    data = joined_record_to_df(rows)
+    data = record_to_df(rows)
     return data
 
 
@@ -70,7 +70,7 @@ def join_by_year(conn, north, south, east, west, year):
               FROM 
                 (SELECT lattitude, longitude, postcode, country FROM `postcode_data` WHERE longitude>{west} AND longitude<{east} AND lattitude>{south} AND lattitude<{north}) pc
               INNER JOIN
-                (SELECT price, `date_of_tranfser`, postcode, `property_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = {year}) pp 
+                (SELECT price, `date_of_transfer`, postcode, `property_type` FROM `pp_data` WHERE YEAR(`date_of_transfer`) = {year}) pp 
               ON pc.postcode = pp.postcode
               """)
     rows = cur.fetchall()
