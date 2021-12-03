@@ -63,7 +63,7 @@ def query_by_postcode(conn, postcode):
     return data
 
 
-def join_by_year(conn, north, south, east, west, year):
+def query_join_by_year(conn, north, south, east, west, year):
     cur = conn.cursor()
     cur.execute(f"""
               SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude
@@ -77,7 +77,7 @@ def join_by_year(conn, north, south, east, west, year):
     return rows
 
 
-def join_by_year_type(conn, north, south, east, west, year, property_type):
+def query_join_by_year_type(conn, north, south, east, west, year, property_type):
     cur = conn.cursor()
     cur.execute(f"""
               SELECT pp.price, pp.`date_of_transfer`, pp.postcode, pp.`property_type`, pc.longitude, pc.lattitude

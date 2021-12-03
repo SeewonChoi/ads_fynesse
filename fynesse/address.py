@@ -7,11 +7,11 @@ from fynesse.access import *
 
 def choose_training_data(conn, latitude, longitude, year, property_type, box_size):
     if property_type == 'O':
-        joined_data = join_by_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
-                                   longitude - box_size, year)
+        joined_data = query_join_by_year(conn, latitude + box_size, latitude - box_size, longitude + box_size,
+                                         longitude - box_size, year)
     else:
-        joined_data = join_by_year_type(conn, latitude + box_size, latitude - box_size, longitude + box_size,
-                                        longitude - box_size, year, property_type)
+        joined_data = query_join_by_year_type(conn, latitude + box_size, latitude - box_size, longitude + box_size,
+                                              longitude - box_size, year, property_type)
 
     if len(joined_data) < 1000 and box_size < 0.2:
         joined_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, box_size + 0.05)
