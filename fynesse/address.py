@@ -35,7 +35,7 @@ def train_model(gp_data):
 
 def predict_price(conn, latitude, longitude, year, property_type):
     pred_point = {'latitude': latitude, 'longitude': longitude}
-    training_data, box_size, data_len = choose_training_data(conn, latitude, longitude, year, property_type, 0.15)
+    training_data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.15)
     data = training_data.append(pred_point, ignore_index=True)
     print("The size of the training data was " + str(len(data)))
 
@@ -55,3 +55,7 @@ def predict_price(conn, latitude, longitude, year, property_type):
                    gp_point['public_transport'], gp_point['tourism']]
     pred = results_basis.predict(design_pred)
     return np.exp(pred)[0]
+
+
+
+def

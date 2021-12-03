@@ -91,9 +91,7 @@ def query_join_by_year_type(conn, north, south, east, west, year, property_type)
     return rows
 
 
-def pca_df(data, n, filter_price=False):
-    if filter_price:
-        data = data[data['price'] < data['price'].quantile(0.99)]
+def pca_df(data, n):
     x = StandardScaler().fit_transform(data)
     pca = PCA(n)
     x_pca = pca.fit_transform(x)
