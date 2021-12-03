@@ -74,10 +74,6 @@
 2. `train_model(data)`
    - filter out 1% of the _data_ with the highest prices
    - _sm.OLS(data['log_price'], design)_
-    ```
-    design = np.column_stack((data['ent'], data['shop_amenity'], data['healthcare'], data['historic'], data['public_transport'], data['tourism']))
-    design = add_constant(design)
-    ```
 
 
 
@@ -85,9 +81,5 @@
    - call `choose_training_data` with initial _box_size=0.10_
      - prints out the size of the returned _training_data_
    - call `add_pois` with the _pred_point_ appended to the _training_data_
-     - _dist = 0.05_
-       ```
-        tag = [{'leisure': True}, {'sport': True}, {'healthcare': True}, {'historic': True}, 
-               {'public_transport': True}, {'tourism': True}, {'shop': True, 'amenity': True}]
    - call `train_model` on data with _pred_point_ removed
    - returns _np.exp(results_basis.predict(design_pred))_
