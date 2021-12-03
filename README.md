@@ -29,7 +29,7 @@
 5. OpenStreetMap data
    - `add_pois(df, tag_list, col_name_list, dist, north, south, east, west)`: for each tag, add a column containing the count of the pois within _dist_ of each point
      - get all pois inside the bbox using  _osmnx.geometries_from_bbox_
-     - buffer each point by _dist_
+     - buffer each point in df by _dist_
      - get count for individual points by using _geopandas.sjoin_
 
 
@@ -61,8 +61,8 @@
 
 ## address.py
 1. `choose_training_data(conn, latitude, longitude, year, property_type, box_size)`
-   - use `query_joined_year` if _property_type_ is 'Other' and `query_joined_year_type` otherwise
-   - increases _box_size_ by 0.05 up to 0.2 if the result of the query is smaller than 1000
+   - if _property_type_ is 'O' use `query_joined_year` and `query_joined_year_type` otherwise
+   - increases _box_size_ by 0.05 up to 0.2 if the size of the training set is smaller than 1000
    - raises an error if the result of the query is empty
      - the model cannot be extrapolated to predict price for point outside the range of dates/regions of UK Priced Paid data
    - returns _training_data_ and _box_size_
@@ -72,14 +72,19 @@
 
 
 2. `train_model(data)`
-   - filter out 1% of the _data_ with the highest prices
-   - _sm.OLS(data['log_price'], design)_
+   - filter out 0.01 of the _data_ with the highest prices
+   - use _sm.OLS(x,y)_ to fit the model 
 
 
 
 3. `predict_price(conn, latitude, longitude, year, property_type)`
    - call `choose_training_data` with initial _box_size=0.10_
-     - prints out the size of the returned _training_data_
+     - prints out the size of the _training_data_ used
    - call `add_pois` with the _pred_point_ appended to the _training_data_
    - call `train_model` on data with _pred_point_ removed
    - returns _np.exp(results_basis.predict(design_pred))_
+
+
+4. `prediction_data(conn, latitude, longitude, year, property_type)`
+   - similar functionality with `predict_price()` but returns the training set instead of the prediction
+   - used for investigation into the linear model such as visualisation/validation
