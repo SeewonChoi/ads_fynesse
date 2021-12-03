@@ -55,3 +55,16 @@ def predict_price(conn, latitude, longitude, year, property_type):
                    gp_point['public_transport'], gp_point['tourism']]
     pred = results_basis.predict(design_pred)
     return np.exp(pred)[0]
+
+
+def prediction_data(conn, latitude, longitude, year, property_type):
+    data, box_size = choose_training_data(conn, latitude, longitude, year, property_type, 0.10)
+    tag = [{'leisure': True}, {'sport': True}, {'healthcare': True}, {'historic': True}, {'public_transport': True},
+           {'tourism': True}, {'shop': True, 'amenity': True}]
+    name = ['leisure', 'sport', 'healthcare', 'historic', 'public_transport', 'tourism', 'shop_amenity']
+    data = add_pois(data, tag, name, 0.005, latitude + box_size, latitude - box_size,
+                    longitude + box_size, longitude - box_size)
+    data['ent'] = data['leisure'] + data['sport']
+    data = data.fillna(0)
+    results_basis = train_model(data)
+    return data, results_basis

@@ -14,23 +14,16 @@ def head(conn, table, n=5):
         print(r)
 
 
-def record_to_df(record):
-    data = pd.DataFrame.from_records(record)
-    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 12: "latitude", 11: "longitude"}, inplace=True,
-                axis='columns')
-    data = data[["price", "date", "postcode", "type", "latitude", "longitude"]]
-    data['longitude'] = data['longitude'].astype(float)
-    data['latitude'] = data['latitude'].astype(float)
-    data['log_price'] = np.log(data['price'])
-    return data
-
-
-def short_record_to_df(record):
-    data = pd.DataFrame.from_records(record)
-    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 5: "latitude", 4: "longitude"}, inplace=True,
-                axis='columns')
-    data['longitude'] = data['longitude'].astype(float)
-    data['latitude'] = data['latitude'].astype(float)
+def query_by_postcode(conn, postcode):
+    cur = conn.cursor()
+    cur.execute(f"""SELECT * 
+                    FROM `pp_data` 
+                    WHERE postcode='{postcode}'
+                    """)
+    rows = cur.fetchall()
+    data = pd.DataFrame.from_records(rows)
+    data.rename({0: 'tid', 1: 'price', 2: 'date', 3: 'postcode', 4: 'type'}, axis='columns', inplace=True)
+    data = data[["tid", "price", "date", "postcode", "type"]]
     data['log_price'] = np.log(data['price'])
     return data
 
@@ -46,20 +39,6 @@ def query_by_date(conn, start_date, end_date):
                     """)
     rows = cur.fetchall()
     data = record_to_df(rows)
-    return data
-
-
-def query_by_postcode(conn, postcode):
-    cur = conn.cursor()
-    cur.execute(f"""SELECT * 
-                    FROM `pp_data` 
-                    WHERE postcode='{postcode}'
-                    """)
-    rows = cur.fetchall()
-    data = pd.DataFrame.from_records(rows)
-    data.rename({0: 'tid', 1: 'price', 2: 'date', 3: 'postcode', 4: 'type'}, axis='columns', inplace=True)
-    data = data[["tid", "price", "date", "postcode", "type"]]
-    data['log_price'] = np.log(data['price'])
     return data
 
 
@@ -89,6 +68,27 @@ def query_join_by_year_type(conn, north, south, east, west, year, property_type)
               """)
     rows = cur.fetchall()
     return rows
+
+
+def record_to_df(record):
+    data = pd.DataFrame.from_records(record)
+    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 12: "latitude", 11: "longitude"}, inplace=True,
+                axis='columns')
+    data = data[["price", "date", "postcode", "type", "latitude", "longitude"]]
+    data['longitude'] = data['longitude'].astype(float)
+    data['latitude'] = data['latitude'].astype(float)
+    data['log_price'] = np.log(data['price'])
+    return data
+
+
+def short_record_to_df(record):
+    data = pd.DataFrame.from_records(record)
+    data.rename({0: "price", 1: "date", 2: "postcode", 3: "type", 5: "latitude", 4: "longitude"}, inplace=True,
+                axis='columns')
+    data['longitude'] = data['longitude'].astype(float)
+    data['latitude'] = data['latitude'].astype(float)
+    data['log_price'] = np.log(data['price'])
+    return data
 
 
 def pca_df(data, n):
